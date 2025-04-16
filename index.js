@@ -1,47 +1,47 @@
 const express = require('express');
 const nodemailer = require('nodemailer');
-const multer = require('multer');
+const bodyParser = require('body-parser');
 const cors = require('cors');
-const fs = require('fs');
+
 const app = express();
-const upload = multer({ dest: 'uploads/' });
+const PORT = process.env.PORT || 3000;
 
+// Middleware
 app.use(cors());
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-app.post('/send-mail', upload.single('pdf'), async (req, res) => {
-    const { email } = req.body;
-    const file = req.file;
+// Email API Route
+app.post('/send-email', async (req, res) => {
+  const { email } = req.body;
 
-    const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-            user: 'your_email@gmail.com',
-            pass: 'your_app_password'  // Use Gmail App Password
-        }
-    });
+  if (!email) return res.status(400).json({ error: 'Email is required' });
 
-    const mailOptions = {
-        from: 'neeshu8795@gmail.com',
-        to: email,
-        subject: 'PDF Document',
-        text: 'Please find attached PDF.',
-        attachments: [
-            {
-                filename: file.originalname,
-                path: file.path
-            }
-        ]
-    };
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,         // Set in Render's Environment Variables
+      pass: process.env.GMAIL_PASS          // Use Gmail App Password (not your actual password)
+    }
+  });
 
-    transporter.sendMail(mailOptions, (error, info) => {
-        fs.unlink(file.path, () => {}); // delete file after sending
-        if (error) {
-            console.error(error);
-            return res.status(500).send('Failed to send email.');
-        }
-        res.send('Email sent!');
-    });
+  const mailOptions = {
+    from: process.env.GMAIL_USER,
+    to: email,
+    subject: 'Thanks for playing!',
+    text: 'This is a test email sent directly from Unity using your shared email address.'
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Email sent successfully' });
+  } catch (error) {
+    console.error('Error sending email:', error);
+    res.status(500).json({ error: 'Failed to send email' });
+  }
 });
 
-app.listen(3000, () => console.log('Server running on port 3000'));
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
