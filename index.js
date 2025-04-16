@@ -26,12 +26,19 @@ app.post('/send-email', async (req, res) => {
   });
 
   const mailOptions = {
-    from: process.env.GMAIL_USER,
+    from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Thanks for playing!',
-    text: 'This is a test email sent directly from Unity using your shared email address.'
+    subject: 'Thanks for sharing!',
+    text: 'Here is your PDF file!',
+    attachments: [
+      {
+        filename: 'MyGameInfo.pdf',
+        path: './assets/MyGameInfo.pdf', // path relative to your backend root folder
+        contentType: 'application/pdf'
+      }
+    ]
   };
-
+  
   try {
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: 'Email sent successfully' });
